@@ -1,16 +1,37 @@
-import { PrivyProvider } from "@privy-io/react-auth";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import Home from "./pages/Home";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { WagmiProvider } from 'wagmi';
+import { config } from './config';
+import Login from "./components/Login";
+import Dashboard from "./components/Dashboard";
+import { usePrivy } from "@privy-io/react-auth";
+import ScoreDisplay from "./Home/ScoreDisplay";
+
+const queryClient = new QueryClient();
+
+function ProtectedRoute({ children }) {
+  const { authenticated } = usePrivy();
+  return authenticated ? children : <Navigate to="/" />;
+}
 
 function App() {
   return (
-    <PrivyProvider appId={import.meta.env.VITE_PRIVY_APP_ID}>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Home />} />
-        </Routes>
-      </Router>
-    </PrivyProvider>
+    <Routes>
+      <Route path="/" element={<Login />} />
+      <Route path="/score" element={<ScoreDisplay/>} />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <WagmiProvider config={config}>
+            <QueryClientProvider client={queryClient}>
+            <Dashboard />
+            </QueryClientProvider>
+    </WagmiProvider>
+          </ProtectedRoute>
+        }
+      />
+    </Routes>
   );
 }
 
