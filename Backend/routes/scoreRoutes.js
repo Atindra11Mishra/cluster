@@ -3,6 +3,7 @@ const { calculateScore } = require("../controllers/scoreController.js");
 
 const router = express.Router();
 
-router.post("/get-score", calculateScore); // POST request to calculate score
+// ✅ Use GET request & dynamic parameters
+router.get("/get-score/:username/:address", calculateScore);
 
 module.exports = router;

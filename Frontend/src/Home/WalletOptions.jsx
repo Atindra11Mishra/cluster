@@ -1,16 +1,29 @@
-import * as React from 'react';
-import { useConnect } from 'wagmi';
+import * as React from "react";
+import { useConnect } from "wagmi";
 
 export function WalletOptions() {
   const { connectors, connect } = useConnect();
 
-  return connectors.map((connector) => (
-    <WalletOption
-      key={connector.uid}
-      connector={connector}
-      onClick={() => connect({ connector })}
-    />
-  ));
+  return (
+    <div >
+      <div className="bg-gray-800 shadow-lg rounded-xl p-8 w-96 text-center border border-gray-700">
+        <h2 className="text-2xl font-bold text-gray-200 mb-4">Connect Wallet </h2>
+        <p className="text-gray-400 text-sm mb-6">
+          Choose a wallet to connect securely.
+        </p>
+
+        <div className="flex flex-col space-y-4">
+          {connectors.map((connector) => (
+            <WalletOption
+              key={connector.uid}
+              connector={connector}
+              onClick={() => connect({ connector })}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function WalletOption({ connector, onClick }) {
@@ -24,7 +37,13 @@ function WalletOption({ connector, onClick }) {
   }, [connector]);
 
   return (
-    <button disabled={!ready} onClick={onClick}>
+    <button
+      disabled={!ready}
+      onClick={onClick}
+      className={`w-full px-5 py-3 rounded-lg transition font-medium text-white
+        ${ready ? "bg-blue-600 hover:bg-blue-500" : "bg-gray-700 cursor-not-allowed"}
+      `}
+    >
       {connector.name}
     </button>
   );
