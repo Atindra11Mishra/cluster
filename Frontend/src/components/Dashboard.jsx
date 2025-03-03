@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setScore } from "../redux/scoreSlice"; // Import Redux action
-import ConnectWallet from "../Home/ConnectWallet";
+
 import TwitterAuth from "../Home/TwitterAuth";
 import WalletConnect from "../Home/WalletConnect";
 import DownloadButton from "../Home/DownloadButton"; // Import Download Button
@@ -99,8 +99,8 @@ const Dashboard = () => {
           {error && <p className="text-red-500 mt-4">{error}</p>}
 
           {/* If no Wallet is Connected, Show Wallet Button */}
-          {!address || address === "null" ? <ConnectWallet /> : null}
-
+          
+         
           {/* If no Twitter is Connected, Show Twitter Auth */}
           {!user.twitter && <TwitterAuth />}
           <WalletConnect />

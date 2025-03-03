@@ -1,8 +1,8 @@
-import { http, createConfig } from 'wagmi';
-import { base, mainnet } from 'wagmi/chains';
-import { walletConnect } from 'wagmi/connectors';
+import { http, createConfig } from "wagmi";
+import { base, mainnet } from "wagmi/chains";
+import { walletConnect } from "wagmi/connectors";
 
-const projectId = 'c6932881eff26db9622e70902eced2f9';
+const projectId = "c6932881eff26db9622e70902eced2f9";
 
 export const config = createConfig({
   chains: [mainnet, base],

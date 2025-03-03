@@ -1,12 +1,18 @@
 import { useState, useEffect } from "react";
 import { BrowserProvider } from "ethers";
+import { useConnect } from "wagmi";
+import { Account } from "./Account";
 
 const WalletConnect = () => {
   const [connectedWallets, setConnectedWallets] = useState({});
   const [error, setError] = useState("");
 
+  // wagmi hook for WalletConnect
+  const { connect, connectors } = useConnect();
+
   // Shorten Wallet Address
-  const shortenAddress = (address) => `${address.slice(0, 6)}...${address.slice(-4)}`;
+  const shortenAddress = (address) =>
+    `${address.slice(0, 6)}...${address.slice(-4)}`;
 
   // Update Wallet List
   const updateWalletList = (walletType, walletData) => {
@@ -24,12 +30,11 @@ const WalletConnect = () => {
     localStorage.removeItem(`${walletType}_connected`);
   };
 
-  // Connect to Ethereum Wallets
+  // Connect to Ethereum Wallets (manual)
   const connectEthereumWallet = async (walletType, provider) => {
     try {
       const accounts = await provider.request({ method: "eth_requestAccounts" });
       const ethersProvider = new BrowserProvider(provider);
-
       updateWalletList(walletType, {
         address: accounts[0],
         provider: ethersProvider,
@@ -50,7 +55,9 @@ const WalletConnect = () => {
 
   // Connect to Coinbase Wallet
   const connectCoinbase = async () => {
-    const provider = window.coinbaseWalletExtension || (window.ethereum?.isCoinbaseWallet ? window.ethereum : null);
+    const provider =
+      window.coinbaseWalletExtension ||
+      (window.ethereum?.isCoinbaseWallet ? window.ethereum : null);
     if (provider) {
       await connectEthereumWallet("coinbase", provider);
     } else {
@@ -101,14 +108,53 @@ const WalletConnect = () => {
     }
   };
 
-  // Restore Wallet Connections from LocalStorage
+  // Connect to WalletConnect using wagmi
+  const connectWalletConnect = async () => {
+    try {
+      // Look up the WalletConnect connector from wagmi’s connectors list.
+      const wcConnector = connectors.find(
+        (connector) => connector.id === "walletConnect"
+      );
+      if (!wcConnector) {
+        setError("WalletConnect connector not available.");
+        return;
+      }
+      const result = await connect({ connector: wcConnector });
+      // Expect result.data to include account and provider
+      if (result?.data) {
+        updateWalletList("walletconnect", {
+          address: result.data.account,
+          provider: result.data.provider,
+        });
+      }
+    } catch (err) {
+      setError(`Failed to connect to WalletConnect: ${err.message}`);
+    }
+  };
+
+  // Restore Wallet Connections from LocalStorage (except for WalletConnect)
   useEffect(() => {
     const walletTypes = [
-      { type: "metamask", provider: window.ethereum?.isMetaMask ? window.ethereum : null },
-      { type: "coinbase", provider: window.coinbaseWalletExtension || (window.ethereum?.isCoinbaseWallet ? window.ethereum : null) },
+      {
+        type: "metamask",
+        provider: window.ethereum?.isMetaMask ? window.ethereum : null,
+      },
+      {
+        type: "coinbase",
+        provider:
+          window.coinbaseWalletExtension ||
+          (window.ethereum?.isCoinbaseWallet ? window.ethereum : null),
+      },
       { type: "trustwallet", provider: getTrustWalletProvider() },
-      { type: "bitget", provider: window.bitkeep?.ethereum || window.bitget?.ethereum },
-      { type: "phantom", provider: window.solana?.isPhantom ? window.solana : null },
+      {
+        type: "bitget",
+        provider: window.bitkeep?.ethereum || window.bitget?.ethereum,
+      },
+      {
+        type: "phantom",
+        provider: window.solana?.isPhantom ? window.solana : null,
+      },
+      // WalletConnect sessions generally cannot be restored automatically.
     ];
 
     walletTypes.forEach(({ type, provider }) => {
@@ -155,34 +201,48 @@ const WalletConnect = () => {
         >
           Connect Phantom
         </button>
+        <button
+          onClick={connectWalletConnect}
+          className="bg-teal-600 px-6 py-3 rounded-lg hover:bg-teal-500 transition"
+        >
+          Connect WalletConnect
+        </button>
       </div>
 
       {/* Display Connected Wallets */}
       <div className="mt-8 w-full max-w-lg bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-700">
         <h3 className="text-2xl font-semibold mb-4">Connected Wallets</h3>
-
         {Object.keys(connectedWallets).length === 0 ? (
           <p className="text-gray-400">No wallets connected.</p>
         ) : (
           <div className="space-y-4">
-            {Object.entries(connectedWallets).map(([walletType, walletData]) => (
-              <div key={walletType} className="flex justify-between items-center bg-gray-700 p-4 rounded-lg">
-                <div>
-                  <p className="font-semibold text-gray-300">{walletType.toUpperCase()}</p>
-                  <p className="text-gray-400">{shortenAddress(walletData.address)}</p>
-                </div>
-                <button
-                  onClick={() => disconnectWallet(walletType)}
-                  className="bg-red-600 px-4 py-2 rounded-lg hover:bg-red-500 transition"
+            {Object.entries(connectedWallets).map(
+              ([walletType, walletData]) => (
+                <div
+                  key={walletType}
+                  className="flex justify-between items-center bg-gray-700 p-4 rounded-lg"
                 >
-                  Disconnect
-                </button>
-              </div>
-            ))}
+                  <div>
+                    <p className="font-semibold text-gray-300">
+                      {walletType.toUpperCase()}
+                    </p>
+                    <p className="text-gray-400">
+                      {shortenAddress(walletData.address)}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => disconnectWallet(walletType)}
+                    className="bg-red-600 px-4 py-2 rounded-lg hover:bg-red-500 transition"
+                  >
+                    Disconnect
+                  </button>
+                </div>
+              )
+            )}
           </div>
         )}
+        <div className="mt-5"><Account/></div>
       </div>
-
       {/* Error Message */}
       {error && <p className="text-red-500 mt-4">{error}</p>}
     </div>
