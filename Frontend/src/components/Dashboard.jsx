@@ -1,21 +1,29 @@
 import { usePrivy } from "@privy-io/react-auth";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { setScore } from "../redux/scoreSlice"; // Import Redux action
 import ConnectWallet from "../Home/ConnectWallet";
 import TwitterAuth from "../Home/TwitterAuth";
+import WalletConnect from "../Home/WalletConnect";
+import DownloadButton from "../Home/DownloadButton"; // Import Download Button
 
 const Dashboard = () => {
   const { logout, user } = usePrivy();
   const navigate = useNavigate();
   const { username, address } = useParams();
+  const dispatch = useDispatch();
 
-  const [scoreData, setScoreData] = useState(null);
+  // ✅ Get global score from Redux
+  const totalScore = useSelector((state) => state.score.totalScore);
+  const scoreTitle = useSelector((state) => state.score.title);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // ✅ Redirect to URL with username & address if missing
+  // ✅ Fetch score on component mount & when Twitter login happens
   useEffect(() => {
-    const userNameFromPrivy = user?.twitter?.username || "guest";
+    const userNameFromPrivy = user?.twitter?.username || user.wallet.id || "guest";
     const walletAddressFromPrivy = user?.wallet?.address || "null";
 
     if (!username || !address) {
@@ -23,8 +31,9 @@ const Dashboard = () => {
     } else {
       fetchScore(username, address);
     }
-  }, [username, address, user, navigate]);
+  }, [username, address, user.twitter]); // ✅ Refetch when user logs in via Twitter
 
+  // ✅ Function to Fetch Score from Backend
   const fetchScore = async (username, address) => {
     setLoading(true);
     setError("");
@@ -41,7 +50,7 @@ const Dashboard = () => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to fetch score");
 
-      setScoreData(data);
+      dispatch(setScore(data)); // ✅ Store updated score in Redux
     } catch (err) {
       setError(err.message);
     }
@@ -77,25 +86,26 @@ const Dashboard = () => {
 
           {loading ? (
             <p className="text-gray-400 mb-6">Calculating...</p>
-          ) : scoreData ? (
-            <div className="mb-6">
-              <p className="text-6xl font-extrabold text-white">{scoreData.score}</p>
-              <p className="text-lg text-gray-400 mt-2">{scoreData.title}</p>
-            </div>
           ) : (
-            <p className="text-gray-400 mb-6">Score not available.</p>
+            <div className="mb-6">
+              <p className="text-6xl font-extrabold text-white">{totalScore}</p>
+              <p className="text-lg text-gray-400 mt-2">{scoreTitle}</p>
+            </div>
           )}
-
+           {/* Download & Share Score Section */}
+          <div className="mt-6 bg-gray-900 p-6 rounded-lg border border-gray-700 shadow-md">
+            <DownloadButton score={totalScore} />
+          </div>
           {error && <p className="text-red-500 mt-4">{error}</p>}
 
-          {!address || address === "null" ? (
-            <div className="mt-4">
-              <h3 className="text-lg font-semibold text-red-500">Connect Wallet to Increase Score</h3>
-              <ConnectWallet />
-            </div>
-          ) : null}
+          {/* If no Wallet is Connected, Show Wallet Button */}
+          {!address || address === "null" ? <ConnectWallet /> : null}
 
+          {/* If no Twitter is Connected, Show Twitter Auth */}
           {!user.twitter && <TwitterAuth />}
+          <WalletConnect />
+
+          
         </div>
       </main>
     </div>

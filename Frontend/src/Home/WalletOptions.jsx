@@ -7,7 +7,7 @@ export function WalletOptions() {
   return (
     <div >
       <div className="bg-gray-800 shadow-lg rounded-xl p-8 w-96 text-center border border-gray-700">
-        <h2 className="text-2xl font-bold text-gray-200 mb-4">Connect Wallet </h2>
+      <h3 className="text-lg font-semibold text-red-500">Connect Wallet to Increase Score</h3>
         <p className="text-gray-400 text-sm mb-6">
           Choose a wallet to connect securely.
         </p>

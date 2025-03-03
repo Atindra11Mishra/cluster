@@ -49,7 +49,7 @@ async function calculateScore(req, res) {
 function generateScore(userData, walletData = {}) {
     let socialScore = 0;
 
-    // ✅ Extract user data safely
+    
     const user = userData?.data?.user?.result || {};
 
     const followers = user.followers_count || 0;
@@ -61,9 +61,9 @@ function generateScore(userData, walletData = {}) {
     if (user.is_blue_verified) socialScore += 5;
     socialScore = Math.min(socialScore, 40);
 
-    // ✅ Handle missing wallet data
+    
     let cryptoScore = 0;
-    const activeChains = walletData?.activeChains?.length || 0; // ✅ Fixes `.activeChains.activeChains`
+    const activeChains = walletData?.activeChains?.length || 0; 
     cryptoScore += activeChains > 1 ? 20 : activeChains === 1 ? 10 : 0;
 
     if ((walletData?.nativeBalance || 0) > 1) cryptoScore += 10;
@@ -78,10 +78,9 @@ function generateScore(userData, walletData = {}) {
             ? 5
             : 0;
 
-    // ✅ Calculate total score
-    const totalScore = socialScore + cryptoScore + nftScore + communityScore;
 
-    // ✅ Assign title based on score
+    const totalScore = socialScore + cryptoScore + nftScore + communityScore;
+    
     let title = "ALL ROUNDOOR";
     if (totalScore >= 90) title = "ALPHA TRADOOR";
     else if (totalScore >= 70) title = "NFT EXPLOROOR";
